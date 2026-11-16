@@ -1,0 +1,48 @@
+PANDUAN PEMASANGAN AXEL25 v1113g (Supabase + SayaBayar + admin.axel25.web.id)
+Nama menu di Vercel, Supabase, dan SayaBayar bisa berbeda dari yang tertulis. Jika bingung, kirim screenshot (jangan sertakan API key atau secret).
+
+A. DOMAIN (VERCEL)
+1. Vercel > project AXEL25 > Settings > Domains. Tambahkan: axel25.web.id, www.axel25.web.id, admin.axel25.web.id.
+2. Di tempat Anda membeli domain, isi DNS sesuai nilai yang ditampilkan Vercel untuk tiap domain (jangan memakai nilai dari tempat lain).
+3. Tunggu status Valid Configuration. Ketiganya memakai satu project dan satu index.html yang sama.
+4. Panel admin sekarang di https://admin.axel25.web.id (login email dan password Supabase, terpisah dari situs utama). Alamat axel25.web.id/admin otomatis dialihkan ke sana. Di alamat vercel.app, /admin tetap bisa dibuka untuk tes.
+
+B. SQL (Supabase > SQL Editor)
+Jalankan isi supabase/migrasi-v2.sql. Aman dijalankan ulang. Syarat: SQL sebelumnya (next_order_no, admin_orders, admin_update_order, get_order, public_data) sudah pernah dijalankan.
+
+C. SECRETS (Supabase > Edge Functions > Secrets)
+Tambahkan:
+  SAYABAYAR_API_KEY            = API key dari dashboard SayaBayar
+  SAYABAYAR_WEBHOOK_MODE       = probe
+  SITE_URL                     = https://axel25.web.id
+Opsional: SAYABAYAR_DEFAULT_EMAIL (hanya jika API menolak tagihan tanpa email).
+SAYABAYAR_WEBHOOK_SECRET diisi pada langkah E.
+JANGAN menempelkan secret di chat, di index.html, atau di tempat lain.
+
+D. PASANG 3 FUNGSI (Supabase > Edge Functions > buat fungsi lewat editor)
+Nama harus persis, isi dari file index.ts masing-masing:
+  create-sayabayar-invoice   (Verify JWT: biarkan aktif)
+  check-sayabayar-payment    (Verify JWT: biarkan aktif)
+  sayabayar-webhook          (Verify JWT: MATIKAN, karena SayaBayar tidak mengirim JWT)
+
+E. DAFTARKAN WEBHOOK
+1. Alamat webhook: https://urjocmydvldvisusdcia.supabase.co/functions/v1/sayabayar-webhook
+2. Daftarkan di dashboard SayaBayar untuk event invoice.paid, invoice.expired, invoice.cancelled.
+3. Salin webhook secret dari SayaBayar, tempel di Supabase Secrets sebagai SAYABAYAR_WEBHOOK_SECRET.
+
+F. UJI PERTAMA (tahap A, mode probe)
+1. Buka axel25.web.id/joki, pilih Paket 2.000, isi data, tekan Bayar dengan QRIS.
+2. Bayar sesuai Total Bayar (termasuk kode unik). Halaman bayar mengecek status ke SayaBayar sendiri dan akan berganti ke struk jika lunas.
+3. Table Editor > payment_events: lihat baris source = webhook-probe. Kolom sig_match berisi format signature yang cocok (hex, base64, sha256=hex, atau sha256=base64). Kolom raw berisi header dan body asli.
+4. Kolom raw_create di tabel payments menyimpan respons asli pembuatan tagihan (untuk dicek jika ada field yang berbeda).
+
+G. KUNCI WEBHOOK (tahap B, hanya jika sig_match terisi)
+1. Tambah Secret SAYABAYAR_SIG_FORMAT = nilai sig_match (contoh: hex).
+2. Ubah SAYABAYAR_WEBHOOK_MODE = live.
+3. Uji lagi dengan Paket 2.000. Jika sig_match kosong, JANGAN ubah ke live. Kirim screenshot payment_events ke saya.
+
+H. PERILAKU
+- Paket berbayar hanya lewat SayaBayar. Harga diambil server dari database. Status Selesai hanya dari respons API SayaBayar.
+- Paket gratis dan Jasa Post tidak berubah (bukti ikuti saluran untuk paket gratis).
+- Tagihan yang kedaluwarsa atau dibatalkan tidak masuk antrean. Pembayaran yang masuk setelah kedaluwarsa tetap diproses jika API menyatakan lunas.
+- Pesanan dari browser hanya diterima untuk Joki gratis dan Jasa Post. Joki berbayar hanya dibuat oleh server.
