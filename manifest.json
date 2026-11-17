@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "AXEL25 Admin",
+  "short_name": "AXEL25 Admin",
+  "description": "Aplikasi panel admin AXEL25",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#061a38",
+  "theme_color": "#061a38",
+  "lang": "id",
+  "categories": [
+    "business",
+    "productivity"
+  ]
+}
