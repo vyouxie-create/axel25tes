@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "id.web.axel25.admin.twa",
+      "sha256_cert_fingerprints": [
+        "61:0C:D6:FD:D8:F2:95:A2:A8:A6:C0:AE:37:79:6B:D0:5C:D9:E1:EC:24:AA:78:8D:1B:D9:83:F2:19:60:20:F2"
+      ]
+    }
+  }
+]
